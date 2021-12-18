@@ -1,18 +1,17 @@
 # frozen_string_literal: true
 
 class RSpecOtelFormatter
-  CURRENT_SPAN_KEY = OpenTelemetry::Context.create_key("current-span")
+  CURRENT_SPAN_KEY = OpenTelemetry::Trace.const_get(:CURRENT_SPAN_KEY)
 
   RSpec::Core::Formatters.register(
     self,
     :start,
     :example_group_started,
-    :example_group_finished,
     :example_started,
-    :example_failed,
-    :example_pending,
-    :example_passed,
+    :example_finished,
+    :example_group_finished,
     :stop,
+    :dump_summary,
     :close
   )
 
@@ -33,15 +32,7 @@ class RSpecOtelFormatter
     start_span @tracer.start_span(example_notification.example.description)
   end
 
-  def example_failed(_)
-    finish
-  end
-
-  def example_pending(_)
-    finish
-  end
-
-  def example_passed(_)
+  def example_finished(example_notification)
     finish
   end
 
@@ -51,14 +42,6 @@ class RSpecOtelFormatter
 
   def stop(_)
     finish
-  end
-
-  def dump_pending(_)
-    # TODO?
-  end
-
-  def dump_failures(_)
-    # TODO?
   end
 
   def dump_summary(_)
