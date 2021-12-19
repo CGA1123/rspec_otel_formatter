@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'opentelemetry'
+
 class RSpecOtelFormatter
   CURRENT_SPAN_KEY = OpenTelemetry::Trace.const_get(:CURRENT_SPAN_KEY)
 
@@ -49,7 +51,8 @@ class RSpecOtelFormatter
   end
 
   def close(_)
-    OpenTelemetry.tracer_provider.shutdown
+    provider = OpenTelemetry.tracer_provider
+    provider.shutdown if provider.respond_to?(:shutdown)
   end
 
   private
@@ -61,7 +64,7 @@ class RSpecOtelFormatter
     @span_stack.push [token, span]
   end
 
-  def finish
+  def finish(attributes = {})
     token, span = @span_stack.pop
 
     OpenTelemetry::Context.detach(token)
